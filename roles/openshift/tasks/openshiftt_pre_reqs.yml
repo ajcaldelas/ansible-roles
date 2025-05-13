@@ -1,0 +1,42 @@
+---
+- name: Check if we have the API DNS entry for the OpenShift cluster
+  ansible.builtin.command:
+    cmd: "dig +short {{ api_dns_vip }}"
+  register: dns_check
+  changed_when: false
+  failed_when: dns_check.rc != 0
+- name: Check if we have the Ingress DNS entry for the OpenShift cluster
+  ansible.builtin.command:
+    cmd: "dig +short {{ ingress_dns_vip }}"
+  register: dns_check
+  changed_when: false
+  failed_when: dns_check.rc != 0
+
+- name: Download OpenShift Client
+  ansible.builtin.get_url:
+    url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ openshift_version }}/openshift-client-linux-{{ openshift_version }}.tar.gz"
+    dest: /tmp/openshift-client.tar.gz
+- name: Extract OpenShift installer
+  ansible.builtin.unarchive:
+    src: /tmp/openshift-client.tar.gz
+    dest: /tmp/
+    remote_src: yes
+- name: Move OpenShift binaries to /usr/local/bin
+  ansible.builtin.command:
+    cmd: mv /tmp/openshift-client-{{ openshift_version }}/oc /usr/local/bin/
+    args:
+      removes: /usr/local/bin/oc
+- name: Download OpenShift Installer
+  ansible.builtin.get_url:
+    url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ openshift_version }}/openshift-install-linux-{{ openshift_version }}.tar.gz"
+    dest: /tmp/openshift-install.tar.gz
+- name: Extract OpenShift installer
+  ansible.builtin.unarchive:
+    src: /tmp/openshift-install.tar.gz
+    dest: /tmp/
+    remote_src: yes
+- name: Move OpenShift installer to /usr/local/bin
+  ansible.builtin.command:
+    cmd: mv /tmp/openshift-install-{{ openshift_version }}/openshift-install /usr/local/bin/
+    args:
+      removes: /usr/local/bin/openshift-install

@@ -1,0 +1,50 @@
+---
+- name: Get Leonovo Manager
+  ansible.builtin.uri:
+    url: "https://{{ server.redfish_ip }}:{{ redfish_port }}/redfish/v1/Managers/1"
+    method: GET
+    user: "{{ redfish_user }}"
+    password: "{{ redfish_password }}"
+    force_basic_auth: yes
+    validate_certs: "{{ server.validate_certs }}"
+    return_content: yes
+  register: lenovo_manager
+  tags:
+    - openshift_baremetal_hosts
+
+- name: Display Lenovo Manager
+  ansible.builtin.debug:
+    msg: "Lenovo Manager: {{ lenovo_manager.json }}"
+  tags:
+    - openshift_baremetal_hosts
+- name: Get Lenovo Virtual Media collection
+  ansible.builtin.uri:
+    url: "https://{{ server.redfish_ip }}:{{ redfish_port }}/redfish/v1/Managers/1/VirtualMedia"
+    method: GET
+    user: "{{ redfish_user }}"
+    password: "{{ redfish_password }}"
+    force_basic_auth: yes
+    validate_certs: "{{ server.validate_certs }}"
+    return_content: yes
+  register: lenovo_virtual_media
+  tags:
+    - openshift_baremetal_hosts
+- name: Display Lenovo Virtual Media
+  ansible.builtin.debug:
+    msg: "Lenovo Virtual Media: {{ lenovo_virtual_media.json.Members[0]}}"
+  tags:
+    - openshift_baremetal_hosts
+
+- name: Find CD/DVD virtual media resource
+  ansible.builtin.set_fact:
+    cd_dvd_virtual_media: "{{ item }}"
+  loop: "{{ lenovo_virtual_media.json.Members }}"
+  when: "'EXT1' in item['@odata.id']"
+  tags:
+    - openshift_baremetal_hosts
+- name: Display CD/DVD virtual media resource 
+  ansible.builtin.debug:
+    msg: "CD/DVD Virtual Media: {{ cd_dvd_virtual_media }}"
+  tags:
+    - openshift_baremetal_hosts
+
