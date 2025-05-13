@@ -1,6 +1,0 @@
----
-- name: Get Redfish info
-  hosts: localhost
-  gather_facts: true
-  roles:
-    - role: openshift
