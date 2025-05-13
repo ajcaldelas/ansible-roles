@@ -1,0 +1,62 @@
+--- 
+- name: Setup NGINX web server
+  when: ansible_os_family == "RedHat"
+  block:
+    - name: Install NGINX
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+
+    - name: Start and enable NGINX service
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Configure firewall for NGINX
+      ansible.builtin.firewalld:
+        service: http
+        permanent: true
+        state: enabled
+
+    - name: Reload firewall
+      ansible.builtin.firewalld:
+        state: reloaded
+- name: Setup NGINX web server
+  when: ansible_os_family == "Debian"
+  block:
+    - name: Install NGINX
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Start and enable NGINX service
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Configure firewall for NGINX
+      ansible.builtin.ufw:
+        rule: allow
+        name: 'Nginx Full'
+
+    - name: Reload firewall
+      ansible.builtin.ufw:
+        state: reloaded
+
+- name: Copy agent ISO to web server
+  block:
+    - name: Copy agent ISO to web server
+      ansible.builtin.copy:
+        src: "{{ openshift_agent_install_dir }}/}/agent.x86_64.iso"
+        dest: /var/www/html/
+      when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+
+    - name: Set permissions on copied ISO files
+      ansible.builtin.file:
+        name: /var/www/html/agent.x86_64.iso
+        owner: {{ ansible_user_id }}
+        group: {{ ansible_user_id }}
+        mode: '0644'
+      when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
